@@ -3,7 +3,13 @@
 
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const reduceMotion = motionPreference.matches;
+  const particlePhysics = window.AstraParticlePhysics;
+
+  const reloadForMotionPreference = () => window.location.reload();
+  if (motionPreference.addEventListener) motionPreference.addEventListener("change", reloadForMotionPreference);
+  else motionPreference.addListener(reloadForMotionPreference);
 
   const benchmarkData = {
     frontier: {
@@ -340,18 +346,16 @@
       });
     });
 
-    window.addEventListener(
-      "scroll",
-      () => {
-        const y = window.scrollY;
-        header.classList.toggle("scrolled", y > 20);
-        header.classList.toggle("nav-hidden", y > previousY + 8 && y > 420 && !document.body.classList.contains("drawer-open"));
-        if (y < previousY - 6) header.classList.remove("nav-hidden");
-        document.body.classList.toggle("entered", y > window.innerHeight * 0.55);
-        previousY = y;
-      },
-      { passive: true },
-    );
+    const updateScrollState = () => {
+      const y = window.scrollY;
+      header.classList.toggle("scrolled", y > 20);
+      header.classList.toggle("nav-hidden", y > previousY + 8 && y > 420 && !document.body.classList.contains("drawer-open"));
+      if (y < previousY - 6) header.classList.remove("nav-hidden");
+      document.body.classList.toggle("entered", y > window.innerHeight * 0.55);
+      previousY = y;
+    };
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+    updateScrollState();
     syncModalState();
     return { setSearch };
   }
@@ -811,7 +815,10 @@
       y = Math.max(-rect.height * 0.3, Math.min(rect.height * 0.3, event.clientY - rect.top - rect.height / 2));
       update();
     });
-    stage.addEventListener("pointerup", () => (dragging = false));
+    const stopDragging = () => (dragging = false);
+    stage.addEventListener("pointerup", stopDragging);
+    stage.addEventListener("pointercancel", stopDragging);
+    stage.addEventListener("lostpointercapture", stopDragging);
     stage.addEventListener("keydown", (event) => {
       const directions = { ArrowLeft: [-12, 0], ArrowRight: [12, 0], ArrowUp: [0, -12], ArrowDown: [0, 12] };
       if (!directions[event.key]) return;
@@ -823,11 +830,13 @@
   }
 
   class Starfield {
-    constructor(canvas, mode, count) {
+    constructor(canvas, mode, density) {
       this.canvas = canvas;
       this.context = canvas.getContext("2d", { alpha: true });
+      if (!this.context) throw new Error("Canvas rendering is unavailable.");
       this.mode = mode;
-      this.count = count;
+      this.density = density;
+      this.count = 0;
       this.stars = [];
       this.width = 0;
       this.height = 0;
@@ -838,18 +847,60 @@
       this.progress = 0;
       this.start = performance.now();
       this.last = this.start;
+      this.pointer = {
+        active: false,
+        pressed: false,
+        previousX: 0,
+        previousY: 0,
+        x: 0,
+        y: 0,
+        velocityX: 0,
+        velocityY: 0,
+        radius: 88,
+        maximumSpeed: 70,
+        lastMove: -Infinity,
+      };
+      this.sprites = {
+        cool: this.createGlowSprite(false),
+        warm: this.createGlowSprite(true),
+      };
+      this.ready = false;
+      this.visible = true;
       this.resize = this.resize.bind(this);
       this.draw = this.draw.bind(this);
       this.resize();
       window.addEventListener("resize", this.resize, { passive: true });
+      if (this.mode === "hero" && "IntersectionObserver" in window) {
+        this.observer = new IntersectionObserver(([entry]) => (this.visible = entry.isIntersecting), { rootMargin: "120px" });
+        this.observer.observe(this.canvas);
+      }
       if (!reduceMotion) requestAnimationFrame(this.draw);
+    }
+
+    createGlowSprite(warm) {
+      const sprite = document.createElement("canvas");
+      const size = 64;
+      sprite.width = size;
+      sprite.height = size;
+      const context = sprite.getContext("2d");
+      const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      gradient.addColorStop(0, "rgba(255,255,255,1)");
+      gradient.addColorStop(0.1, warm ? "rgba(255,224,205,.98)" : "rgba(234,247,255,.98)");
+      gradient.addColorStop(0.28, warm ? "rgba(239,161,117,.56)" : "rgba(163,211,255,.56)");
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, size, size);
+      return sprite;
     }
 
     resize() {
       const rect = this.canvas.getBoundingClientRect();
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const pixelBudget = this.mode === "hero" ? 2000000 : 1500000;
+      const budgetRatio = Math.sqrt(pixelBudget / Math.max(1, rect.width * rect.height));
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5, budgetRatio);
       this.width = rect.width;
       this.height = rect.height;
+      this.count = window.innerWidth < 700 ? this.density.mobile : this.density.desktop;
       this.canvas.width = Math.max(1, Math.round(rect.width * ratio));
       this.canvas.height = Math.max(1, Math.round(rect.height * ratio));
       this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -864,132 +915,328 @@
     build() {
       this.stars = [];
       const scale = Math.min(this.width, this.height) / 720;
+      const galaxyCount = this.mode === "hero" ? Math.floor(this.count * 0.88) : 0;
+      const outerCount = Math.floor(galaxyCount * 0.34);
+      const spiralCount = Math.floor(galaxyCount * 0.34);
+      const tailCount = Math.floor(galaxyCount * 0.24);
       for (let index = 0; index < this.count; index += 1) {
         const randomA = this.seeded(index, 1);
         const randomB = this.seeded(index, 2);
         const randomC = this.seeded(index, 3);
+        const layer = this.mode === "hero" ? (index < galaxyCount ? "galaxy" : "ambient") : "space";
+        let structure = layer;
         let x;
         let y;
 
-        if (this.mode === "hero" && index < this.count * 0.74) {
-          if (index < this.count * 0.47) {
+        if (layer === "galaxy") {
+          if (index < outerCount) {
+            structure = "outer";
             const angle = randomA * Math.PI * 2;
-            const thickness = (randomB - 0.5) * 52;
-            x = (Math.cos(angle) * (156 + thickness)) * scale;
-            y = (85 + Math.sin(angle) * (145 + thickness * 0.42)) * scale;
-          } else {
-            const t = (index - this.count * 0.47) / (this.count * 0.27);
+            const thickness = (randomB - 0.5) * 46;
+            x = Math.cos(angle) * (183 + thickness) * scale;
+            y = (68 + Math.sin(angle) * (150 + thickness * 0.46)) * scale;
+          } else if (index < outerCount + spiralCount) {
+            structure = "spiral";
+            const t = randomA;
+            const angle = -0.35 + t * Math.PI * 2.85;
+            const thickness = (randomB - 0.5) * (25 - t * 10);
+            const radius = 139 * Math.pow(1 - t, 0.82) + 12 + thickness;
+            x = Math.cos(angle) * radius * scale;
+            y = (68 + Math.sin(angle) * radius * 0.84) * scale;
+          } else if (index < outerCount + spiralCount + tailCount) {
+            structure = "tail";
+            const t = randomA;
             const one = 1 - t;
-            x = (one * one * 112 + 2 * one * t * -120 + t * t * -142 + (randomB - 0.5) * 38) * scale;
-            y = (one * one * -260 + 2 * one * t * -165 + t * t * 55 + (randomC - 0.5) * 38) * scale;
+            x = (
+              one * one * one * -142 +
+              3 * one * one * t * -235 +
+              3 * one * t * t * -120 +
+              t * t * t * 190 +
+              (randomB - 0.5) * 30
+            ) * scale;
+            y = (
+              one * one * one * -27 +
+              3 * one * one * t * -190 +
+              3 * one * t * t * -285 +
+              t * t * t * -242 +
+              (randomC - 0.5) * 26
+            ) * scale;
+          } else {
+            structure = "core";
+            const angle = randomA * Math.PI * 2;
+            const radius = Math.sqrt(randomB) * 27;
+            x = Math.cos(angle) * radius * scale;
+            y = (68 + Math.sin(angle) * radius * 0.8) * scale;
           }
+        } else if (layer === "ambient") {
+          x = randomA * this.width;
+          y = randomB * this.height;
         } else {
           x = (randomA - 0.5) * this.width * 1.3;
           y = (randomB - 0.5) * this.height * 1.25;
         }
         this.stars.push({
+          layer,
+          structure,
           x,
           y,
-          z: (randomC - 0.5) * 440,
-          radius: 0.35 + this.seeded(index, 4) * (this.mode === "hero" ? 2.8 : 1.6),
+          z: layer === "ambient" ? 0 : (randomC - 0.5) * (structure === "core" ? 80 : 260),
+          radius:
+            layer === "galaxy"
+              ? 0.2 + Math.pow(this.seeded(index, 4), 3) * (structure === "core" ? 5.4 : 4.3)
+              : 0.3 + this.seeded(index, 4) * 1.45,
           phase: this.seeded(index, 5) * Math.PI * 2,
           warm: this.seeded(index, 6) > 0.84,
-          brightness: 0.3 + this.seeded(index, 7) * 0.7,
+          brightness: (structure === "core" ? 0.58 : 0.3) + this.seeded(index, 7) * (structure === "core" ? 0.42 : 0.7),
+          mass: 0.65 + this.seeded(index, 10) * 1.75,
+          offsetX: 0,
+          offsetY: 0,
+          velocityX: 0,
+          velocityY: 0,
+          screenX: 0,
+          screenY: 0,
         });
       }
     }
 
     draw(time) {
       const delta = Math.min(40, time - this.last);
+      const frameScale = Math.max(0.25, delta / (1000 / 60));
       this.last = time;
+      const paused = document.hidden || (this.mode === "hero" && !this.visible) || (this.mode === "space" && !document.body.classList.contains("entered"));
+      if (paused) {
+        requestAnimationFrame(this.draw);
+        return;
+      }
       this.context.clearRect(0, 0, this.width, this.height);
-      this.rotationX += (this.targetX - this.rotationX) * 0.045;
-      this.rotationY += (this.targetY - this.rotationY) * 0.045;
+      const rotationEase = 1 - Math.exp((-5.5 * frameScale) / 60);
+      this.rotationX += (this.targetX - this.rotationX) * rotationEase;
+      this.rotationY += (this.targetY - this.rotationY) * rotationEase;
       if (this.mode === "hero") this.progress = Math.min(1, (time - this.start) / 1800);
 
-      const cosX = Math.cos(this.rotationX);
-      const sinX = Math.sin(this.rotationX);
-      const cosY = Math.cos(this.rotationY);
-      const sinY = Math.sin(this.rotationY);
       const scrollShift = this.mode === "space" ? (window.scrollY * 0.025) % this.height : 0;
-
-      this.stars.forEach((star, index) => {
-        let x = star.x;
-        let y = star.y;
-        let z = star.z;
-        const rotatedX = x * cosY - z * sinY;
-        const rotatedZ = x * sinY + z * cosY;
-        const rotatedY = y * cosX - rotatedZ * sinX;
-        z = y * sinX + rotatedZ * cosX;
-        const depth = Math.max(0.54, 1 + z / 900);
-        const intro = this.mode === "hero" ? 1 - Math.pow(1 - this.progress, 3) : 1;
-        const burst = this.mode === "hero" ? (1 - intro) * (this.seeded(index, 9) - 0.5) * 700 : 0;
-        const screenX = this.width / 2 + rotatedX * depth + burst;
-        let screenY = this.height / 2 + rotatedY * depth + burst * 0.22 + scrollShift;
-        if (this.mode === "space" && screenY > this.height + 10) screenY -= this.height + 20;
-        const pulse = 0.56 + Math.sin(time * 0.0013 + star.phase) * 0.44;
-        const alpha = Math.max(0.07, star.brightness * pulse * (this.mode === "hero" ? intro : 0.7));
-        const radius = star.radius * depth * (this.mode === "hero" ? 1.15 : 0.7);
-        this.context.beginPath();
-        this.context.arc(screenX, screenY, radius, 0, Math.PI * 2);
-        this.context.fillStyle = star.warm ? `rgba(244,184,148,${alpha})` : `rgba(220,239,255,${alpha})`;
-        if (radius > 2 && alpha > 0.55) {
-          this.context.shadowColor = star.warm ? "#efae88" : "#c8e5ff";
-          this.context.shadowBlur = radius * 6;
-        } else {
-          this.context.shadowBlur = 0;
+      const coreCenter =
+        this.mode === "hero"
+          ? particlePhysics.projectLayerPoint(
+              { layer: "galaxy", x: 0, y: 68 * (Math.min(this.width, this.height) / 720), z: 0 },
+              this.rotationX * 0.5,
+              this.rotationY * 0.5,
+              this.width,
+              this.height,
+            )
+          : null;
+      const coreSpin = (time - this.start) * 0.000288;
+      const render = (star, index) => {
+        const rotationScale =
+          star.structure === "tail" ? 0.7 : star.structure === "spiral" ? 0.82 : star.structure === "core" ? 0.5 : 1;
+        const projected = particlePhysics.projectLayerPoint(
+          star,
+          this.rotationX * rotationScale,
+          this.rotationY * rotationScale,
+          this.width,
+          this.height,
+        );
+        const intro = this.mode === "hero" && star.layer === "galaxy" ? 1 - Math.pow(1 - this.progress, 3) : 1;
+        const scatter = star.layer === "galaxy" ? (1 - intro) * (220 + this.seeded(index, 8) * 380) : 0;
+        const scatterAngle = this.seeded(index, 9) * Math.PI * 2;
+        let anchorX = projected.screenX;
+        let anchorY = projected.screenY;
+        if (star.structure === "core") {
+          const relativeX = anchorX - coreCenter.screenX;
+          const relativeY = anchorY - coreCenter.screenY;
+          anchorX = coreCenter.screenX + relativeX * Math.cos(coreSpin) - relativeY * Math.sin(coreSpin);
+          anchorY = coreCenter.screenY + relativeX * Math.sin(coreSpin) + relativeY * Math.cos(coreSpin);
+        } else if (star.layer === "galaxy") {
+          const flowAmplitude = star.structure === "outer" ? 0.012 : star.structure === "spiral" ? 0.009 : 0.005;
+          const flow = Math.sin((time - this.start) * 0.0011 + star.phase) * flowAmplitude;
+          const relativeX = anchorX - coreCenter.screenX;
+          const relativeY = anchorY - coreCenter.screenY;
+          anchorX = coreCenter.screenX + relativeX * Math.cos(flow) - relativeY * Math.sin(flow);
+          anchorY = coreCenter.screenY + relativeX * Math.sin(flow) + relativeY * Math.cos(flow);
         }
-        this.context.fill();
-      });
-      this.context.shadowBlur = 0;
+        star.screenX = anchorX + Math.cos(scatterAngle) * scatter;
+        star.screenY = anchorY + Math.sin(scatterAngle) * scatter * 0.62;
+
+        if (star.layer === "galaxy" || star.layer === "ambient") {
+          particlePhysics.stepDisturbance(star, this.pointer, frameScale);
+        }
+
+        const screenX = star.screenX + star.offsetX;
+        let screenY = star.screenY + star.offsetY + scrollShift;
+        if (this.mode === "space" && screenY > this.height + 10) screenY -= this.height + 20;
+        const pulse = 0.72 + Math.sin(time * 0.0013 + star.phase) * 0.28;
+        const layerOpacity = star.layer === "ambient" ? 0.58 : 1;
+        const fade = this.mode === "hero" ? (star.layer === "ambient" ? Math.min(1, this.progress * 2.4) : intro) : 0.7;
+        const alpha = Math.max(0.03, star.brightness * pulse * layerOpacity * fade);
+        const radiusScale = star.layer === "galaxy" ? 1.15 : 0.72;
+        const radius = star.radius * projected.depth * radiusScale;
+        const spriteSize = Math.max(1.4, radius * 7.5);
+        this.context.globalAlpha = alpha;
+        this.context.drawImage(
+          star.warm ? this.sprites.warm : this.sprites.cool,
+          screenX - spriteSize / 2,
+          screenY - spriteSize / 2,
+          spriteSize,
+          spriteSize,
+        );
+      };
+
+      if (this.mode === "hero") {
+        this.context.globalCompositeOperation = "lighter";
+        this.stars.forEach((star, index) => star.layer === "galaxy" && render(star, index));
+        this.stars.forEach((star, index) => star.layer === "ambient" && render(star, index));
+        this.context.globalCompositeOperation = "source-over";
+      } else {
+        this.stars.forEach(render);
+      }
+      this.pointer.active = false;
+      this.pointer.velocityX = 0;
+      this.pointer.velocityY = 0;
+      this.context.globalAlpha = 1;
+      if (this.mode === "hero" && !this.ready) {
+        this.ready = true;
+        const hero = this.canvas.closest(".hero");
+        hero.classList.add("canvas-ready");
+        this.canvas.setAttribute("role", "button");
+        this.canvas.setAttribute(
+          "aria-label",
+          "Move your pointer to disturb the Astra star field. Drag or use arrow keys to rotate it.",
+        );
+        this.canvas.setAttribute("aria-hidden", "false");
+        this.canvas.tabIndex = 0;
+      }
       requestAnimationFrame(this.draw);
+    }
+
+    trackPointer(clientX, clientY, pressed = false, time = performance.now()) {
+      if (this.mode !== "hero") return;
+      const rect = this.canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const recent = time - this.pointer.lastMove < 160;
+      const continuingSwipe = this.pointer.active && !pressed;
+      const previousX = continuingSwipe ? this.pointer.previousX : recent ? this.pointer.x : x;
+      const previousY = continuingSwipe ? this.pointer.previousY : recent ? this.pointer.y : y;
+      const velocityX = recent ? x - previousX : 0;
+      const velocityY = recent ? y - previousY : 0;
+
+      this.pointer.previousX = previousX;
+      this.pointer.previousY = previousY;
+      this.pointer.x = x;
+      this.pointer.y = y;
+      this.pointer.velocityX = velocityX;
+      this.pointer.velocityY = velocityY;
+      this.pointer.radius = Math.max(70, Math.min(92, this.width * 0.075));
+      this.pointer.pressed = pressed;
+      this.pointer.lastMove = time;
+      this.pointer.active = recent && !pressed && (velocityX !== 0 || velocityY !== 0);
+    }
+
+    releasePointer() {
+      this.pointer.active = false;
+      this.pointer.pressed = false;
+      this.pointer.lastMove = -Infinity;
     }
 
     replay() {
       this.start = performance.now();
       this.progress = 0;
+      this.rotationX = 0;
+      this.rotationY = 0;
       this.targetX = 0;
       this.targetY = 0;
+      this.releasePointer();
+      this.stars.forEach((star) => {
+        star.offsetX = 0;
+        star.offsetY = 0;
+        star.velocityX = 0;
+        star.velocityY = 0;
+      });
     }
   }
 
   function initCanvases() {
     if (reduceMotion) return;
-    const hero = new Starfield($("#hero-canvas"), "hero", window.innerWidth < 700 ? 540 : 950);
-    const space = new Starfield($("#space-canvas"), "space", window.innerWidth < 700 ? 130 : 260);
+    if (!particlePhysics) {
+      return;
+    }
+
+    let hero;
+    try {
+      hero = new Starfield($("#hero-canvas"), "hero", { mobile: 1150, desktop: 2200 });
+    } catch (error) {
+      return;
+    }
+    let space = null;
+    try {
+      space = new Starfield($("#space-canvas"), "space", { mobile: 130, desktop: 260 });
+    } catch (error) {
+      space = null;
+    }
     const canvas = $("#hero-canvas");
     let dragging = false;
+    let activePointerId = null;
     let lastX = 0;
     let lastY = 0;
+    const clampRotation = () => {
+      hero.targetX = Math.max(-Math.PI * 4, Math.min(Math.PI * 4, hero.targetX));
+      hero.targetY = Math.max(-Math.PI * 4, Math.min(Math.PI * 4, hero.targetY));
+    };
+    const faceForward = () => {
+      hero.targetX = 0;
+      hero.targetY = 0;
+    };
 
     canvas.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || activePointerId !== null || (event.pointerType === "mouse" && event.button !== 0)) return;
       dragging = true;
+      activePointerId = event.pointerId;
       lastX = event.clientX;
       lastY = event.clientY;
+      hero.trackPointer(event.clientX, event.clientY, true);
       canvas.setPointerCapture(event.pointerId);
     });
     canvas.addEventListener("pointermove", (event) => {
+      if (!event.isPrimary || (activePointerId !== null && event.pointerId !== activePointerId)) return;
+      hero.trackPointer(event.clientX, event.clientY, dragging || event.buttons !== 0 || event.pointerType === "touch");
       if (!dragging) return;
-      hero.targetY += (event.clientX - lastX) * 0.004;
-      hero.targetX += (event.clientY - lastY) * 0.003;
-      hero.targetX = Math.max(-0.75, Math.min(0.75, hero.targetX));
-      hero.targetY = Math.max(-1.1, Math.min(1.1, hero.targetY));
+      hero.targetY += (event.clientX - lastX) * 0.005;
+      hero.targetX += (event.clientY - lastY) * 0.005;
+      clampRotation();
       lastX = event.clientX;
       lastY = event.clientY;
     });
-    canvas.addEventListener("pointerup", () => (dragging = false));
+    const stopDragging = (event) => {
+      if (activePointerId !== null && event.pointerId !== activePointerId) return;
+      dragging = false;
+      activePointerId = null;
+      faceForward();
+      hero.releasePointer();
+    };
+    canvas.addEventListener("pointerup", stopDragging);
+    canvas.addEventListener("pointercancel", stopDragging);
+    canvas.addEventListener("lostpointercapture", stopDragging);
+    canvas.addEventListener("pointerleave", () => {
+      if (!dragging) hero.releasePointer();
+    });
     canvas.addEventListener("keydown", (event) => {
       const changes = { ArrowLeft: [0, -0.08], ArrowRight: [0, 0.08], ArrowUp: [-0.08, 0], ArrowDown: [0.08, 0] };
       if (!changes[event.key]) return;
       event.preventDefault();
       hero.targetX += changes[event.key][0];
       hero.targetY += changes[event.key][1];
+      clampRotation();
     });
+    canvas.addEventListener("keyup", (event) => {
+      if (event.key.startsWith("Arrow")) faceForward();
+    });
+    canvas.addEventListener("blur", faceForward);
     $("[data-replay]").addEventListener("click", () => hero.replay());
 
     window.addEventListener(
       "pointermove",
       (event) => {
+        if (!space) return;
         space.targetY = ((event.clientX / window.innerWidth) - 0.5) * 0.08;
         space.targetX = ((event.clientY / window.innerHeight) - 0.5) * -0.05;
       },

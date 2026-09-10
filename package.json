@@ -5,6 +5,6 @@
   "description": "Interactive one-shot recreation of the GPT-6 Astra launch page",
   "scripts": {
     "dev": "npx serve . -l 4173",
-    "check": "node --check app.js"
+    "check": "node --check app.js && node --check hero-physics.js && node --test tests/hero-physics.test.js"
   }
 }

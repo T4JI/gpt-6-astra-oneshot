@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://images.ctfassets.net" />
     <link rel="preconnect" href="https://player.vimeo.com" />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./hero-physics.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -94,12 +95,12 @@
 
     <main id="main">
       <section class="hero" id="top" aria-labelledby="hero-title">
-        <canvas id="hero-canvas" aria-label="Interactive Astra star field. Drag or use arrow keys to rotate." tabindex="0"></canvas>
+        <canvas id="hero-canvas" aria-hidden="true" tabindex="-1"></canvas>
         <div class="hero-vignette"></div>
         <h1 id="hero-title" class="sr-only">GPT-6 Astra: A new generation of intelligence</h1>
         <p class="hero-label hero-label-left">GPT</p>
         <p class="hero-label hero-label-right">Astra</p>
-        <p class="drag-hint"><span>↔</span> Drag to explore</p>
+        <p class="drag-hint"><span>↔</span> Move to disturb · drag to rotate</p>
         <button class="replay-button" data-replay aria-label="Replay spiral field animation">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 9A8 8 0 1 1 4 14"/><path d="M4 4v5h5"/></svg>
         </button>
