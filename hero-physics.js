@@ -40,8 +40,7 @@
   }
 
   function stepDisturbance(particle, pointer, frameScale = 1) {
-    const scale = clamp(frameScale, 0.25, 2.5);
-    const seconds = scale / 60;
+    const totalScale = clamp(frameScale, 0.25, 15);
 
     if (pointer.active && !pointer.pressed) {
       const distance = distanceToSegment(
@@ -69,14 +68,20 @@
       particle.velocityY = (particle.velocityY / speed) * maximumSpeed;
     }
 
-    particle.offsetX += particle.velocityX * scale;
-    particle.offsetY += particle.velocityY * scale;
-    const velocityDecay = Math.exp((-2.3 * seconds) / Math.sqrt(particle.mass || 1));
-    const positionDecay = Math.exp(-seconds);
-    particle.velocityX *= velocityDecay;
-    particle.velocityY *= velocityDecay;
-    particle.offsetX *= positionDecay;
-    particle.offsetY *= positionDecay;
+    let remainingScale = totalScale;
+    while (remainingScale > 0) {
+      const scale = Math.min(1, remainingScale);
+      const seconds = scale / 60;
+      particle.offsetX += particle.velocityX * scale;
+      particle.offsetY += particle.velocityY * scale;
+      const velocityDecay = Math.exp((-2.3 * seconds) / Math.sqrt(particle.mass || 1));
+      const positionDecay = Math.exp(-seconds);
+      particle.velocityX *= velocityDecay;
+      particle.velocityY *= velocityDecay;
+      particle.offsetX *= positionDecay;
+      particle.offsetY *= positionDecay;
+      remainingScale -= scale;
+    }
 
     if (!pointer.active && Math.hypot(particle.offsetX, particle.offsetY) < 0.02 && Math.hypot(particle.velocityX, particle.velocityY) < 0.02) {
       particle.offsetX = 0;

@@ -866,15 +866,21 @@
       };
       this.ready = false;
       this.visible = true;
+      this.frameRequest = null;
       this.resize = this.resize.bind(this);
       this.draw = this.draw.bind(this);
       this.resize();
       window.addEventListener("resize", this.resize, { passive: true });
       if (this.mode === "hero" && "IntersectionObserver" in window) {
-        this.observer = new IntersectionObserver(([entry]) => (this.visible = entry.isIntersecting), { rootMargin: "120px" });
+        this.observer = new IntersectionObserver(([entry]) => {
+          this.visible = entry.isIntersecting;
+          this.schedule();
+        }, { rootMargin: "120px" });
         this.observer.observe(this.canvas);
       }
-      if (!reduceMotion) requestAnimationFrame(this.draw);
+      if (this.mode === "space") window.addEventListener("scroll", () => this.schedule(), { passive: true });
+      document.addEventListener("visibilitychange", () => this.schedule());
+      this.schedule();
     }
 
     createGlowSprite(warm) {
@@ -905,6 +911,11 @@
       this.canvas.height = Math.max(1, Math.round(rect.height * ratio));
       this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
       this.build();
+      this.schedule();
+    }
+
+    schedule() {
+      if (!reduceMotion && this.frameRequest === null) this.frameRequest = requestAnimationFrame(this.draw);
     }
 
     seeded(index, offset = 0) {
@@ -1000,14 +1011,12 @@
     }
 
     draw(time) {
-      const delta = Math.min(40, time - this.last);
+      this.frameRequest = null;
+      const delta = Math.min(250, time - this.last);
       const frameScale = Math.max(0.25, delta / (1000 / 60));
       this.last = time;
       const paused = document.hidden || (this.mode === "hero" && !this.visible) || (this.mode === "space" && !document.body.classList.contains("entered"));
-      if (paused) {
-        requestAnimationFrame(this.draw);
-        return;
-      }
+      if (paused) return;
       this.context.clearRect(0, 0, this.width, this.height);
       const rotationEase = 1 - Math.exp((-5.5 * frameScale) / 60);
       this.rotationX += (this.targetX - this.rotationX) * rotationEase;
@@ -1105,7 +1114,7 @@
         this.canvas.setAttribute("aria-hidden", "false");
         this.canvas.tabIndex = 0;
       }
-      requestAnimationFrame(this.draw);
+      this.schedule();
     }
 
     trackPointer(clientX, clientY, pressed = false, time = performance.now()) {
@@ -1207,7 +1216,7 @@
       lastY = event.clientY;
     });
     const stopDragging = (event) => {
-      if (activePointerId !== null && event.pointerId !== activePointerId) return;
+      if (activePointerId === null || event.pointerId !== activePointerId) return;
       dragging = false;
       activePointerId = null;
       faceForward();
@@ -1220,6 +1229,11 @@
       if (!dragging) hero.releasePointer();
     });
     canvas.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        hero.replay();
+        return;
+      }
       const changes = { ArrowLeft: [0, -0.08], ArrowRight: [0, 0.08], ArrowUp: [-0.08, 0], ArrowDown: [0.08, 0] };
       if (!changes[event.key]) return;
       event.preventDefault();

@@ -119,3 +119,39 @@ test("pressed pointer motion does not disturb particles", () => {
   assert.equal(particle.offsetX, 0);
   assert.equal(particle.offsetY, 0);
 });
+
+test("particle recovery is stable across frame rates", () => {
+  const simulate = (framesPerSecond) => {
+    const particle = {
+      screenX: 120,
+      screenY: 100,
+      offsetX: 0,
+      offsetY: 0,
+      velocityX: 0,
+      velocityY: 0,
+      mass: 1,
+    };
+    const pointer = {
+      active: true,
+      pressed: false,
+      previousX: 70,
+      previousY: 100,
+      x: 130,
+      y: 100,
+      radius: 88,
+      velocityX: 60,
+      velocityY: 0,
+      maximumSpeed: 70,
+    };
+    const frameScale = 60 / framesPerSecond;
+
+    for (let frame = 0; frame < framesPerSecond * 6; frame += 1) {
+      stepDisturbance(particle, pointer, frameScale);
+      pointer.active = false;
+    }
+    return particle.offsetX;
+  };
+  const offsets = [10, 20, 30, 60, 120].map(simulate);
+
+  assert.ok(Math.max(...offsets) - Math.min(...offsets) < 0.25, `frame-rate drift: ${offsets.join(", ")}`);
+});
