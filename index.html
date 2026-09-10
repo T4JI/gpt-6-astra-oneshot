@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="An interactive one-shot recreation of OpenAI's GPT-6 Astra launch experience."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:title" content="GPT-6 Astra · Unofficial one-shot recreation" />
+    <meta property="og:description" content="An interactive, independent recreation of OpenAI's GPT-6 Astra launch experience." />
+    <meta property="og:image" content="https://images.ctfassets.net/kftzwdyauwt9/6ibCaqsoO7F6XCNCIO8zaZ/9475cdebc1f0af100414f1c85860fc4c/Hero_16x9.png?w=1600&h=900&fit=fill" />
+    <meta name="theme-color" content="#03070b" />
+    <title>GPT-6 Astra: A new generation of intelligence</title>
+    <link rel="preconnect" href="https://cdn.openai.com" />
+    <link rel="preconnect" href="https://images.ctfassets.net" />
+    <link rel="preconnect" href="https://player.vimeo.com" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="site-header" data-header>
+      <a class="wordmark" href="#top" aria-label="OpenAI home">OpenAI</a>
+
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <div class="nav-item">
+          <a href="#research">Research</a>
+          <button class="nav-disclosure" aria-label="Open Research menu" aria-expanded="false">+</button>
+          <div class="nav-menu">
+            <a href="#introduction"><span>Research index</span><small>Explore our latest advances</small></a>
+            <a href="#science"><span>Science</span><small>Models as research collaborators</small></a>
+            <a href="#alignment"><span>Safety</span><small>Alignment and deployment</small></a>
+          </div>
+        </div>
+        <div class="nav-item">
+          <a href="#professional">Products</a>
+          <button class="nav-disclosure" aria-label="Open Products menu" aria-expanded="false">+</button>
+          <div class="nav-menu">
+            <a href="#computer-use"><span>ChatGPT</span><small>Get things done with Astra</small></a>
+            <a href="#coding"><span>Codex</span><small>Build and ship software</small></a>
+            <a href="#availability"><span>API</span><small>Bring Astra to your product</small></a>
+          </div>
+        </div>
+        <a href="#professional">Business</a>
+        <a href="#coding">Developers</a>
+        <a href="#footer">Company</a>
+        <a href="#footer">Foundation</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button search-button" aria-label="Open search" data-search-open>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2"/></svg>
+        </button>
+        <a class="login-button" href="https://chatgpt.com/auth/login" target="_blank" rel="noreferrer">Log in <span>⌄</span></a>
+        <a class="try-button" href="https://chatgpt.com" target="_blank" rel="noreferrer">Try ChatGPT <span>↗</span></a>
+        <button class="mobile-menu-button" data-mobile-menu aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="mobile-drawer" data-mobile-drawer role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true">
+      <nav aria-label="Mobile navigation">
+        <a href="#introduction">Research <span>↗</span></a>
+        <a href="#professional">Products <span>↗</span></a>
+        <a href="#professional">Business <span>↗</span></a>
+        <a href="#coding">Developers <span>↗</span></a>
+        <a href="#footer">Company <span>↗</span></a>
+        <a href="#footer">Foundation <span>↗</span></a>
+      </nav>
+      <div class="drawer-actions">
+        <a href="https://chatgpt.com/auth/login" target="_blank" rel="noreferrer">Log in</a>
+        <a class="try-button" href="https://chatgpt.com" target="_blank" rel="noreferrer">Try ChatGPT ↗</a>
+      </div>
+    </div>
+
+    <div class="search-overlay" data-search-overlay role="dialog" aria-modal="true" aria-label="Site search" aria-hidden="true">
+      <button class="search-close" data-search-close aria-label="Close search">×</button>
+      <form class="search-form" data-search-form>
+        <label for="site-search">Search OpenAI</label>
+        <div>
+          <input id="site-search" type="search" autocomplete="off" placeholder="What are you looking for?" />
+          <button type="submit">Search <span>↗</span></button>
+        </div>
+      </form>
+      <p class="search-hint">Try “computer use”, “coding”, or “availability”.</p>
+      <div class="search-results" data-search-results aria-live="polite"></div>
+    </div>
+
+    <canvas id="space-canvas" aria-hidden="true"></canvas>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <canvas id="hero-canvas" aria-label="Interactive Astra star field. Drag or use arrow keys to rotate." tabindex="0"></canvas>
+        <div class="hero-vignette"></div>
+        <h1 id="hero-title" class="sr-only">GPT-6 Astra: A new generation of intelligence</h1>
+        <p class="hero-label hero-label-left">GPT</p>
+        <p class="hero-label hero-label-right">Astra</p>
+        <p class="drag-hint"><span>↔</span> Drag to explore</p>
+        <button class="replay-button" data-replay aria-label="Replay spiral field animation">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 9A8 8 0 1 1 4 14"/><path d="M4 4v5h5"/></svg>
+        </button>
+        <div class="scroll-cue"><span>Scroll to enter</span><i></i></div>
+      </section>
+
+      <div class="editorial-shell">
+        <section class="section intro" id="introduction">
+          <header class="section-heading reveal">
+            <p class="eyebrow">Introducing GPT-6 Astra</p>
+            <h2>A new generation<br />of intelligence</h2>
+          </header>
+
+          <div class="launch-film reveal" data-video-card>
+            <button class="film-cover" aria-label="Play the GPT-6 Astra launch film">
+              <img
+                src="https://images.ctfassets.net/kftzwdyauwt9/H9Mf4UPiWGb0N25sLJHUu/6d971b8e12cbab3db48c94617d703b5d/poster.webp?w=1920&q=90&fm=webp"
+                alt="A cinematic still from the GPT-6 Astra launch film"
+              />
+              <span class="play-disc"><i></i></span>
+              <span class="film-time">00:00 / 02:43</span>
+              <span class="film-label">Launch film</span>
+            </button>
+          </div>
+
+          <div class="article-copy reveal">
+            <p class="lede">We’re introducing GPT-6 Astra, the world’s most intelligent and aligned model.</p>
+            <p>
+              GPT-6 Astra brings together years of research across pre-training, reinforcement learning, and alignment.
+              It reaches new frontiers in computer use, browsing, software engineering, cybersecurity, science, and
+              professional work.
+            </p>
+            <p>
+              Astra is rolling out to a limited set of organizations first, then to ChatGPT Plus, Pro, Business, and
+              Enterprise users, as well as the OpenAI API, Microsoft Azure, and AWS Bedrock.
+            </p>
+          </div>
+
+          <div class="benchmark interactive-panel reveal" data-benchmark="frontier">
+            <div class="pill-tabs" role="tablist" aria-label="Frontier evaluations">
+              <button role="tab" aria-selected="true" data-tab="science">Terminal-Bench Science 0.1</button>
+              <button role="tab" aria-selected="false" data-tab="arc">ARC-AGI-3</button>
+              <button role="tab" aria-selected="false" data-tab="math">FrontierMath Tier 4</button>
+              <button role="tab" aria-selected="false" data-tab="terminal">Terminal-Bench 4.0</button>
+              <button role="tab" aria-selected="false" data-tab="automation">AutomationBench</button>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card-head">
+                <div>
+                  <p class="chart-title" data-chart-title>Terminal-Bench Science 0.1</p>
+                  <button class="metric-chip">API cost <span>⌄</span></button>
+                </div>
+                <button class="download-button" aria-label="Download benchmark data">↓</button>
+              </div>
+              <div class="chart-legend" data-chart-legend></div>
+              <svg class="benchmark-chart" data-chart viewBox="0 0 760 420" role="img" aria-label="Benchmark comparison chart"></svg>
+              <p class="chart-description" data-chart-description></p>
+            </div>
+          </div>
+
+          <figure class="quote-card reveal">
+            <blockquote>
+              “On ARC-AGI-3, Astra surpassed our human action-efficiency baseline on 96% of levels, effectively reaching
+              human parity on the benchmark.”
+            </blockquote>
+            <figcaption><strong>Greg Kamradt</strong><span>ARC Prize Foundation</span></figcaption>
+          </figure>
+        </section>
+
+        <section class="section" id="computer-use">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Computer use</p>
+            <h2>The world’s best<br />computer use model</h2>
+            <p>
+              Astra sets a new frontier in the speed, accuracy, and safety of computer use. It can move through real
+              tools, complete tedious workflows, conduct research, and check its own work.
+            </p>
+          </header>
+
+          <div class="cursor-stage reveal" data-cursor-stage tabindex="0" aria-label="Interactive computer-use cursor">
+            <div class="cursor-orbit orbit-a"></div>
+            <div class="cursor-orbit orbit-b"></div>
+            <div class="cursor-glow"></div>
+            <div class="cursor-pointer">↖</div>
+            <p>Drag or use arrow keys<br />to guide the cursor</p>
+          </div>
+
+          <div class="benchmark interactive-panel reveal" data-benchmark="computer">
+            <div class="pill-tabs" role="tablist" aria-label="Computer use evaluations">
+              <button role="tab" aria-selected="true" data-tab="ale">Agents’ Last Exam</button>
+              <button role="tab" aria-selected="false" data-tab="screenspot">ScreenSpot-Pro</button>
+              <button role="tab" aria-selected="false" data-tab="osworld">OSWorld</button>
+            </div>
+            <div class="chart-card compact-chart">
+              <div class="chart-card-head">
+                <p class="chart-title" data-chart-title>Agents’ Last Exam</p>
+                <span class="big-score" data-big-score>59.3%</span>
+              </div>
+              <div class="bar-chart" data-bars></div>
+              <p class="chart-description" data-chart-description></p>
+            </div>
+          </div>
+
+          <div class="article-copy reveal">
+            <p>
+              GPT-6 Astra’s computer-use capabilities show up across domains, including electrical engineering, game
+              development, and everyday knowledge work.
+            </p>
+          </div>
+
+          <div class="demo-tabs reveal" data-demo-tabs>
+            <div class="pill-tabs" role="tablist" aria-label="Computer use examples">
+              <button role="tab" aria-selected="true" data-demo="circuit">Circuit board</button>
+              <button role="tab" aria-selected="false" data-demo="excel">Excel competition</button>
+              <button role="tab" aria-selected="false" data-demo="game">Game development</button>
+              <button role="tab" aria-selected="false" data-demo="form">Filling in a Form 1040</button>
+              <button role="tab" aria-selected="false" data-demo="qa">Frontend quality assurance</button>
+            </div>
+            <div class="demo-frame">
+              <div class="demo-frame-head">
+                <div><i></i><i></i><i></i></div>
+                <span data-demo-title>KiCad · PCB Editor</span>
+                <button aria-label="Expand example">↗</button>
+              </div>
+              <div class="demo-visual" data-demo-visual></div>
+              <div class="demo-caption">
+                <p data-demo-caption>Astra turns an electronic schematic into a manufacturable printed circuit board.</p>
+                <span>15 second condensed playback</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="speed-callout reveal">
+            <p class="stat">1.9×</p>
+            <p>faster task completion with the updated Codex computer-use harness</p>
+            <div class="speed-lines"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="life-showcase reveal" data-life-tabs>
+            <div class="pill-tabs" role="tablist" aria-label="Everyday computer-use examples">
+              <button role="tab" aria-selected="true" data-life="pediatrician">Pediatrician search</button>
+              <button role="tab" aria-selected="false" data-life="apartment">Apartment hunting</button>
+              <button role="tab" aria-selected="false" data-life="dmv">DMV appointment</button>
+              <button role="tab" aria-selected="false" data-life="snacks">Low-carb snacks</button>
+              <button role="tab" aria-selected="false" data-life="kindergarten">Kindergarten analysis</button>
+            </div>
+            <div class="life-meta">
+              <p>GPT-6 Astra</p>
+              <h3 data-life-time>2 min 54 sec</h3>
+            </div>
+            <div class="life-media">
+              <div class="browser-chrome"><i></i><i></i><i></i><span data-life-title>Pediatrician search</span></div>
+              <iframe
+                data-life-frame
+                src="https://player.vimeo.com/video/1223356211?h=382415d2ce&badge=0&autopause=0&controls=1&autoplay=1&muted=1&loop=1"
+                title="Pediatrician search demonstration"
+                allow="autoplay; fullscreen; picture-in-picture"
+                loading="lazy"
+              ></iframe>
+              <button
+                class="media-cover"
+                data-life-cover
+                style="--poster:url('https://i.vimeocdn.com/video/2196552762-dc227ff844cdf943fcd1efe98f42cf893d1020bd71849b2d564974b0e5915308-d_1280x720?region=us')"
+                aria-label="Play the pediatrician search demonstration"
+              ><span class="play-disc"><i></i></span><small>View playback</small></button>
+            </div>
+            <p class="media-caption" data-life-caption>Astra researches local pediatricians, compares constraints, and leaves the final choice with the user.</p>
+          </div>
+
+          <figure class="quote-card logo-quote reveal">
+            <div class="quote-logo">cognition</div>
+            <blockquote>
+              “Its excellent computer use, writing, and codebase understanding improved testing right out of the box.”
+            </blockquote>
+            <figcaption><strong>Silas Alberti</strong><span>SVP Research, Cognition</span></figcaption>
+          </figure>
+        </section>
+
+        <section class="section professional" id="professional">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Professional work</p>
+            <h2>A step change in<br />professional work</h2>
+            <p>
+              Astra combines intelligence for complex problems with the ability to carry out multistep workflows and
+              produce polished documents, spreadsheets, presentations, and analyses.
+            </p>
+          </header>
+
+          <div class="metric-grid reveal">
+            <article><span>95.9%</span><h3>BenchCAD</h3><p>Geometric overlap with tool use</p></article>
+            <article><span>91.5%</span><h3>BrowseComp</h3><p>Deep web research accuracy</p></article>
+            <article><span>0.84</span><h3>OpenScore</h3><p>String quartet reconstruction</p></article>
+          </div>
+
+          <div class="artifact-showcase reveal" data-artifacts>
+            <div class="pill-tabs" role="tablist" aria-label="Professional artifact examples">
+              <button role="tab" aria-selected="true" data-artifact="slides">Gaia presentation</button>
+              <button role="tab" aria-selected="false" data-artifact="sheet">Spreadsheet</button>
+              <button role="tab" aria-selected="false" data-artifact="document">Document styling</button>
+            </div>
+            <div class="artifact-stage" data-artifact-stage>
+              <div class="deck-window">
+                <aside><i></i><i></i><i></i><i></i></aside>
+                <div class="deck-slide">
+                  <p>OPENAI</p>
+                  <h3>GPT-Gaia</h3>
+                  <span>A multimodal frontier</span>
+                  <div class="gaia-orb"></div>
+                </div>
+              </div>
+            </div>
+            <div class="artifact-meta"><span>Reference file</span><span>GPT-6 Astra output</span></div>
+          </div>
+
+          <div class="sites-callout reveal">
+            <p>Astra brings stronger visual judgment to the websites, games, applications, and renderings it builds.</p>
+            <a href="https://learn.chatgpt.com/docs/sites" target="_blank" rel="noreferrer">Explore Sites in ChatGPT <span>↗</span></a>
+          </div>
+
+          <figure class="quote-card reveal">
+            <div class="quote-logo script-logo">Higgsfield</div>
+            <blockquote>
+              “Astra gives us a significant advantage in both capability and efficiency, with higher-quality output.”
+            </blockquote>
+            <figcaption><strong>Alex Mashrabov</strong><span>CEO and Co-founder, Higgsfield AI</span></figcaption>
+          </figure>
+
+          <div class="game-showcase reveal">
+            <div class="pill-tabs" role="tablist" aria-label="Creative examples">
+              <button role="tab" aria-selected="true" data-game="race">Kart Racer Game</button>
+              <button role="tab" aria-selected="false" data-game="ship">Spaceship</button>
+            </div>
+            <div class="game-frame">
+              <iframe
+                title="Interactive Tidal Rush kart-racing game"
+                data-src="https://tidal-rush-paradise-gp.skirano.chatgpt.site/"
+                sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+                loading="lazy"
+              ></iframe>
+              <div class="game-placeholder" data-game-placeholder>
+                <div class="racer-road"><i></i><i></i><i></i></div>
+                <h3>TIDAL RUSH</h3>
+                <button data-load-game>Launch interactive game <span>↗</span></button>
+                <a class="game-fallback" data-game-fallback href="https://tidal-rush-paradise-gp.skirano.chatgpt.site/" target="_blank" rel="noreferrer">Open in a new tab ↗</a>
+              </div>
+            </div>
+            <p class="media-caption">A vivid, playable kart-racing game created from a prompt. Credit: Pietro Schirano.</p>
+          </div>
+
+          <div class="career-showcase reveal" data-career-tabs>
+            <div class="career-copy">
+              <p class="eyebrow">Judgment in collaboration</p>
+              <h3>Knowing when to ask</h3>
+              <p>When instructions leave room for interpretation, Astra resolves routine gaps and asks focused questions when the answer could change the outcome.</p>
+            </div>
+            <div class="pill-tabs" role="tablist" aria-label="Clarification examples">
+              <button role="tab" aria-selected="true" data-career="career">Career website</button>
+              <button role="tab" aria-selected="false" data-career="college">College search</button>
+              <button role="tab" aria-selected="false" data-career="grocery">Grocery list</button>
+            </div>
+            <div class="career-image">
+              <img
+                data-career-image
+                src="https://images.ctfassets.net/kftzwdyauwt9/6XttKhMddBzO6pT2IY2brG/841e9a215931057aeb578e1aa45f9bb4/career-website-dark-v3.png?w=1920&q=90&fm=webp"
+                alt="Side-by-side model collaboration comparison for a career website"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <figure class="quote-card reveal">
+            <div class="quote-logo">Harvey</div>
+            <blockquote>“Astra distinguishes documents from established records, surfaces unsupported assumptions, and turns gaps into concrete drafting positions.”</blockquote>
+            <figcaption><strong>Niko Grupen</strong><span>Head of Applied Research, Harvey</span></figcaption>
+          </figure>
+        </section>
+
+        <section class="section" id="coding">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Developers</p>
+            <h2>Coding</h2>
+            <p>GPT-6 Astra is our strongest software-engineering model to date.</p>
+          </header>
+
+          <div class="dual-quotes reveal">
+            <figure class="quote-card">
+              <div class="quote-logo mono-logo">JANESTREET</div>
+              <blockquote>“A clear step forward in codebase understanding, trading intuition, and production quality.”</blockquote>
+              <figcaption><strong>John Crepezzi</strong><span>AI Assistants, Jane Street</span></figcaption>
+            </figure>
+            <figure class="quote-card warm">
+              <div class="quote-logo script-logo">lovable</div>
+              <blockquote>“More iterations, more browser verification, and a faster path from idea to working app.”</blockquote>
+              <figcaption><strong>Fabian Hedin</strong><span>CTO & Co-founder, Lovable</span></figcaption>
+            </figure>
+          </div>
+
+          <div class="coding-score reveal">
+            <div><span>57.9%</span><p>Terminal-Bench 4.0</p></div>
+            <div class="score-track"><i style="--score: 58%"></i><i style="--score: 37%"></i><i style="--score: 56%"></i></div>
+            <div class="score-key"><span>Astra</span><span>Sol</span><span>Fable 5.1</span></div>
+          </div>
+
+          <div class="context-callout reveal">
+            <div class="context-visual" aria-hidden="true">
+              <div class="thread thread-a"></div><div class="thread thread-b"></div><div class="thread thread-c"></div>
+              <span>requirements</span><span>tests</span><span>decisions</span><span>context</span>
+            </div>
+            <div>
+              <p class="eyebrow">Long-running work</p>
+              <h3>Context that stays useful</h3>
+              <p>
+                In Codex, Astra can preserve notes across context windows and search earlier work, keeping requirements,
+                failed approaches, and test results available during long sessions.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="science">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Research</p>
+            <h2>Advancing<br />scientific discovery</h2>
+            <p>
+              Astra advances scientific reasoning across mathematics and health, and can work directly in specialized
+              software to inspect data and explore results.
+            </p>
+          </header>
+
+          <figure class="quote-card reveal">
+            <div class="quote-logo mono-logo">EPOCH AI</div>
+            <blockquote>“The story is: end of one era, start of another.”</blockquote>
+            <figcaption><strong>Greg Burnham</strong><span>Epoch AI</span></figcaption>
+          </figure>
+
+          <div class="science-grid reveal">
+            <article>
+              <div class="atom"><i></i><i></i><i></i><b></b></div>
+              <span>96.0%</span><h3>GPQA Diamond</h3><p>Graduate-level biology, chemistry, and physics</p>
+            </article>
+            <article>
+              <div class="helix" aria-hidden="true"></div>
+              <span>63.4%</span><h3>HealthBench Professional</h3><p>Realistic expert health conversations</p>
+            </article>
+          </div>
+
+          <div class="lab-demo reveal">
+            <div class="lab-toolbar"><span>Genome workspace</span><div><button>Filter</button><button>Compare</button></div></div>
+            <div class="lab-grid">
+              <aside><span>RUN SUMMARY</span><b>1,482,901</b><small>reads analyzed</small><hr/><span>QUALITY</span><b>97.4%</b><small>passing</small></aside>
+              <div class="sequence-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <p>Astra inspects sequencing quality and visualizes genetic variation to focus further analysis.</p>
+          </div>
+        </section>
+
+        <section class="section cyber" id="cybersecurity">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Security</p>
+            <h2>Cybersecurity</h2>
+            <p>
+              Astra is a significant jump in cyber capability. Its stronger reasoning can help defenders find and patch
+              weaknesses faster, paired with safeguards for high-risk requests.
+            </p>
+          </header>
+
+          <div class="cyber-score reveal">
+            <div class="radar" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+            <div><span>100%</span><h3>ExploitBench</h3><p>Known-vulnerability tasks completed in evaluation without production safeguards.</p></div>
+          </div>
+
+          <div class="prose-columns reveal">
+            <p>
+              On novel internal evaluations, Astra achieved substantially higher code-execution rates while using fewer
+              output tokens. OpenAI is pairing access with monitoring, model robustness, and expert testing.
+            </p>
+            <p>
+              The launch model supports secure code review and patching. More advanced defensive workflows are planned
+              through controlled-access programs.
+            </p>
+          </div>
+        </section>
+
+        <section class="section alignment" id="alignment">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Alignment</p>
+            <h2>Aligning and deploying<br />Astra responsibly</h2>
+            <p>
+              Astra is designed to exercise care, respect task boundaries, and communicate transparently from start to
+              finish.
+            </p>
+          </header>
+
+          <div class="alignment-viz reveal">
+            <div class="alignment-rings" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+            <div class="alignment-copy">
+              <p class="stat">2.4%</p>
+              <h3>Fewer misaligned outcomes</h3>
+              <p>Astra caused fewer unintended outcomes than any other frontier model in the comparison.</p>
+            </div>
+          </div>
+
+          <div class="boundary-cards reveal">
+            <article><span>01</span><h3>Understand intent</h3><p>Resolve routine ambiguity from context.</p></article>
+            <article><span>02</span><h3>Respect boundaries</h3><p>Stay within the user’s authorized scope.</p></article>
+            <article><span>03</span><h3>Communicate clearly</h3><p>Surface uncertainty and consequential choices.</p></article>
+          </div>
+        </section>
+
+        <section class="section availability" id="availability">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Access</p>
+            <h2>Availability</h2>
+            <p>
+              GPT-6 Astra is rolling out across ChatGPT and the OpenAI API, with availability through Microsoft Azure
+              and AWS Bedrock.
+            </p>
+          </header>
+
+          <div class="pricing reveal">
+            <article><span>Input</span><strong>$10</strong><p>per million tokens</p></article>
+            <article><span>Output</span><strong>$50</strong><p>per million tokens</p></article>
+            <article><span>Fast mode</span><strong>2×</strong><p>speed at 2× standard price</p></article>
+          </div>
+        </section>
+
+        <section class="section evals" id="research">
+          <header class="section-heading split reveal">
+            <p class="eyebrow">Results</p>
+            <h2>Evaluation<br />highlights</h2>
+            <p>Maximum reported scores at any effort, grouped by capability.</p>
+          </header>
+
+          <div class="table-accordion reveal" data-table-accordion>
+            <article class="table-section is-open">
+              <button class="table-toggle" aria-expanded="true"><span>Computer Use</span><i>−</i></button>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Computer Use</th><th>GPT-6 Astra</th><th>GPT-5.6 Sol</th><th>Claude Opus 5</th></tr></thead>
+                  <tbody>
+                    <tr><td>Agents’ Last Exam</td><td>59.3%</td><td>53.6%</td><td>55.5%</td></tr>
+                    <tr><td>OSWorld 2.0</td><td>72.6%</td><td>65.7%</td><td>70.2%</td></tr>
+                    <tr><td>ScreenSpot-Pro</td><td>92.7%</td><td>76.9%</td><td>87.3%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+            <article class="table-section">
+              <button class="table-toggle" aria-expanded="false"><span>Professional</span><i>+</i></button>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Professional</th><th>GPT-6 Astra</th><th>GPT-5.6 Sol</th><th>Claude Fable 5.1</th></tr></thead>
+                  <tbody>
+                    <tr><td>AutomationBench</td><td>41.4%</td><td>18.1%</td><td>31.4%</td></tr>
+                    <tr><td>BenchCAD</td><td>95.9%</td><td>83.3%</td><td>84.3%</td></tr>
+                    <tr><td>BrowseComp</td><td>91.5%</td><td>90.4%</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+            <article class="table-section">
+              <button class="table-toggle" aria-expanded="false"><span>Coding</span><i>+</i></button>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Coding</th><th>GPT-6 Astra</th><th>GPT-5.6 Sol</th><th>Claude Fable 5.1</th></tr></thead>
+                  <tbody>
+                    <tr><td>Terminal-Bench 4.0</td><td>57.9%</td><td>37.3%</td><td>55.8%</td></tr>
+                    <tr><td>DeepSWE v1.1</td><td>74.1%</td><td>72.7%</td><td>67.4%</td></tr>
+                    <tr><td>FrontierCode Extended</td><td>64.5%</td><td>60.6%</td><td>63.6%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+            <article class="table-section">
+              <button class="table-toggle" aria-expanded="false"><span>Academic & Science</span><i>+</i></button>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Academic & Science</th><th>GPT-6 Astra</th><th>GPT-5.6 Sol</th><th>Claude Fable 5.1</th></tr></thead>
+                  <tbody>
+                    <tr><td>Terminal-Bench Science 0.1</td><td>64.6%</td><td>22.4%</td><td>52.6%</td></tr>
+                    <tr><td>FrontierMath Tier 4</td><td>97.6%</td><td>83.0%</td><td>87.8%</td></tr>
+                    <tr><td>GPQA Diamond</td><td>96.0%</td><td>94.6%</td><td>93.7%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+            <article class="table-section">
+              <button class="table-toggle" aria-expanded="false"><span>Alignment</span><i>+</i></button>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Alignment, lower is better</th><th>GPT-6 Astra</th><th>GPT-5.6 Sol</th><th>Claude Fable 5.1</th></tr></thead>
+                  <tbody>
+                    <tr><td>Computer-use safety</td><td>2.4%</td><td>22.0%</td><td>9.5%</td></tr>
+                    <tr><td>Circumvention</td><td>0.00%</td><td>0.29%</td><td>—</td></tr>
+                    <tr><td>Capability hallucination</td><td>4.2%</td><td>12.2%</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+
+          <p class="method-note reveal">
+            Evaluation scores are shown for comparison and may differ from production ChatGPT because of system prompts,
+            tools, and harness configuration.
+          </p>
+        </section>
+
+        <section class="footnotes reveal" aria-labelledby="footnotes-title">
+          <h2 id="footnotes-title">Notes</h2>
+          <ol>
+            <li>Selected metrics and product claims mirror the public GPT-6 Astra announcement for demonstration.</li>
+            <li>This recreation uses original implementation code and condenses the source article’s editorial copy.</li>
+            <li>External media remains hosted by its original publisher and may require network access.</li>
+          </ol>
+        </section>
+      </div>
+    </main>
+
+    <footer id="footer" class="site-footer">
+      <div class="footer-top">
+        <a class="wordmark footer-wordmark" href="#top">OpenAI</a>
+        <a class="back-top" href="#top">Back to top <span>↑</span></a>
+      </div>
+      <div class="footer-grid">
+        <section><h2>Research</h2><a href="#research">Research Index</a><a href="#science">Research Overview</a><a href="#alignment">Safety</a></section>
+        <section><h2>Latest Advancements</h2><a href="#top">GPT-6</a><a href="#coding">GPT-5.6</a><a href="#research">Models</a></section>
+        <section><h2>Products</h2><a href="https://chatgpt.com" target="_blank" rel="noreferrer">ChatGPT ↗</a><a href="#coding">Codex</a><a href="#availability">API Platform</a></section>
+        <section><h2>Business</h2><a href="#professional">Overview</a><a href="#professional">Solutions</a><a href="#computer-use">Customer stories</a></section>
+        <section><h2>Developers</h2><a href="#coding">Docs</a><a href="#research">Resources</a><a href="#availability">API login ↗</a></section>
+        <section><h2>Company</h2><a href="#footer">About us</a><a href="#footer">Careers</a><a href="#footer">News</a></section>
+        <section><h2>Terms & Policies</h2><a href="#footer">Terms of use</a><a href="#footer">Privacy policy</a><a href="#footer">Other policies</a></section>
+      </div>
+      <div class="footer-bottom">
+        <div class="socials"><a href="#footer">X</a><a href="#footer">YouTube</a><a href="#footer">LinkedIn</a><a href="#footer">GitHub</a><a href="#footer">Instagram</a></div>
+        <p>OpenAI © 2015–2026</p>
+        <p class="demo-note">Unofficial one-shot recreation for internal demonstration.</p>
+      </div>
+    </footer>
+  </body>
+</html>
